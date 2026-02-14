@@ -1,7 +1,6 @@
-import { Place } from '../models/places.models';
-import { Rating } from '../models/ratings.models';
-import { User } from '../models/user.models';
-import { buildFingerPrint } from '../utils/utils.aiBuilder';
+import { Place } from '../models/places.models.js';
+import { Rating } from '../models/ratings.models.js';
+import { buildFingerPrint } from '../utils/utils.aiBuilder.js';
 
 export const saveUserPreferences = async (req, res) => {
   try {
@@ -21,7 +20,7 @@ export const saveUserPreferences = async (req, res) => {
       });
     }
 
-    const user = req.auth.userId; // replace with actual user fetch from mongo
+    const user = req.user;
 
     user.preferences = {
       cuisines,
@@ -47,7 +46,7 @@ export const editUserPreferences = async (req, res) => {
   try {
     const updates = req.body;
 
-    const user = req.auth.userId; // replace with actual user fetch from mongo
+    const user = req.user;
 
     if (!user.preferences) {
       return res.status(400).json({
@@ -97,7 +96,7 @@ export const addEnjoyedRestaurants = async (req, res) => {
       });
     }
 
-    const user = req.auth.userId; // replace with actual user fetch from mongo
+    const user = req.user;
 
     const newIds = restaurantIds.filter(
       (id) => !user.enjoyedRestaurants.includes(id),
@@ -132,7 +131,7 @@ export const removeEnjoyedRestaurants = async (req, res) => {
       });
     }
 
-    const user = req.auth.userId; // replace with actual user fetch from mongo
+    const user = req.user;
 
     user.enjoyedRestaurants = user.enjoyedRestaurants.filter(
       (id) => !restaurantIds.includes(id.toString()),
@@ -164,14 +163,9 @@ export const fetchEnjoyedRestaurantsWithSearchQuery = async (req, res) => {
     );
     const searchQuery = (req.query.searchQuery || '').trim();
 
-    const user = req.auth.userId;
+    const user = req.user;
 
-    const userData = await User.findOne(
-      { clerkUserId: user },
-      { enjoyedRestaurants: 1 },
-    ).lean();
-
-    if (!userData || !userData.enjoyedRestaurants?.length) {
+    if (!user.enjoyedRestaurants?.length) {
       return res.status(200).json({
         success: true,
         data: [],
@@ -185,7 +179,7 @@ export const fetchEnjoyedRestaurantsWithSearchQuery = async (req, res) => {
     }
 
     const query = {
-      _id: { $in: userData.enjoyedRestaurants },
+      _id: { $in: user.enjoyedRestaurants },
       ...(searchQuery && { name: { $regex: searchQuery, $options: 'i' } }),
     };
 
@@ -220,25 +214,13 @@ export const fetchEnjoyedRestaurantsWithSearchQuery = async (req, res) => {
 
 export const viewProfile = async (req, res) => {
   try {
-    const user = req.auth.userId;
-
-    const userData = await User.findOne(
-      { clerkUserId: user },
-      { preferences: 1 },
-    ).lean();
-
-    if (!userData) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
+    const user = req.user;
 
     return res.status(200).json({
       success: true,
       data: {
-        email: userData.email,
-        preferences: userData.preferences,
+        email: user.email,
+        preferences: user.preferences,
       },
     });
   } catch (error) {
@@ -318,7 +300,7 @@ export const searchPlaces = async (req, res) => {
 export const addRating = async (req, res) => {
   try {
     const { placeId, score } = req.body;
-    const user = req.auth.userId;
+    const user = req.user;
 
     if (!placeId || score == null) {
       return res.status(400).json({
@@ -334,18 +316,6 @@ export const addRating = async (req, res) => {
       });
     }
 
-    const userData = await User.findOne(
-      { clerkUserId: user },
-      { _id: 1 },
-    ).lean();
-
-    if (!userData) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
     const place = await Place.findById(placeId).lean();
     if (!place) {
       return res.status(404).json({
@@ -355,7 +325,7 @@ export const addRating = async (req, res) => {
     }
 
     const rating = await Rating.findOneAndUpdate(
-      { userId: userData._id, restaurantId: placeId },
+      { userId: user._id, restaurantId: placeId },
       { score },
       { upsert: true, new: true },
     );
@@ -373,3 +343,7 @@ export const addRating = async (req, res) => {
     });
   }
 };
+
+// Finish fingerprint builder
+// Add monthly runner for places
+// Finish photoscanner and recommender apis and logic
