@@ -1,3 +1,6 @@
+import { Place } from '../models/places.models';
+import { Rating } from '../models/ratings.models';
+import { User } from '../models/user.models';
 import { buildFingerPrint } from '../utils/utils.aiBuilder';
 
 export const saveUserPreferences = async (req, res) => {
@@ -149,5 +152,224 @@ export const removeEnjoyedRestaurants = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: 'Failed to remove restaurants' });
+  }
+};
+
+export const fetchEnjoyedRestaurantsWithSearchQuery = async (req, res) => {
+  try {
+    const pageNo = Math.max(0, parseInt(req.query.pageNo) || 0);
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseInt(req.query.pageSize) || 20),
+    );
+    const searchQuery = (req.query.searchQuery || '').trim();
+
+    const user = req.auth.userId;
+
+    const userData = await User.findOne(
+      { clerkUserId: user },
+      { enjoyedRestaurants: 1 },
+    ).lean();
+
+    if (!userData || !userData.enjoyedRestaurants?.length) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        pagination: {
+          totalRecords: 0,
+          currentPage: pageNo,
+          totalPages: 0,
+          pageSize,
+        },
+      });
+    }
+
+    const query = {
+      _id: { $in: userData.enjoyedRestaurants },
+      ...(searchQuery && { name: { $regex: searchQuery, $options: 'i' } }),
+    };
+
+    const [places, totalCount] = await Promise.all([
+      Place.find(query)
+        .limit(pageSize)
+        .skip(pageNo * pageSize)
+        .lean(),
+      Place.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: places,
+      pagination: {
+        totalRecords: totalCount,
+        currentPage: pageNo,
+        totalPages: Math.ceil(totalCount / pageSize),
+        pageSize,
+        hasNextPage: (pageNo + 1) * pageSize < totalCount,
+        hasPrevPage: pageNo > 0,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching enjoyed restaurants:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch enjoyed restaurants',
+    });
+  }
+};
+
+export const viewProfile = async (req, res) => {
+  try {
+    const user = req.auth.userId;
+
+    const userData = await User.findOne(
+      { clerkUserId: user },
+      { preferences: 1 },
+    ).lean();
+
+    if (!userData) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        email: userData.email,
+        preferences: userData.preferences,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch profile',
+    });
+  }
+};
+
+export const searchPlaces = async (req, res) => {
+  try {
+    const pageNo = Math.max(0, parseInt(req.query.pageNo) || 0);
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseInt(req.query.pageSize) || 20),
+    );
+    const searchQuery = (req.query.searchQuery || '').trim();
+    const lng = parseFloat(req.query.lng);
+    const lat = parseFloat(req.query.lat);
+    const radiusKm = parseFloat(req.query.radiusKm) || 30;
+
+    const query = {};
+
+    if (!isNaN(lng) && !isNaN(lat)) {
+      query.location = {
+        $near: {
+          $geometry: { type: 'Point', coordinates: [lng, lat] },
+          $maxDistance: radiusKm * 1000,
+        },
+      };
+    }
+
+    if (searchQuery) {
+      query.name = { $regex: searchQuery, $options: 'i' };
+    }
+
+    const countQuery = { ...query };
+    if (countQuery.location?.$near) {
+      countQuery.location = {
+        $geoWithin: {
+          $centerSphere: [[lng, lat], radiusKm / 6378.1],
+        },
+      };
+    }
+
+    const [places, totalCount] = await Promise.all([
+      Place.find(query)
+        .skip(pageNo * pageSize)
+        .limit(pageSize)
+        .lean(),
+      Place.countDocuments(countQuery),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: places,
+      pagination: {
+        totalRecords: totalCount,
+        currentPage: pageNo,
+        totalPages: Math.ceil(totalCount / pageSize),
+        pageSize,
+        hasNextPage: (pageNo + 1) * pageSize < totalCount,
+        hasPrevPage: pageNo > 0,
+      },
+    });
+  } catch (error) {
+    console.error('Error searching places:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to search places',
+    });
+  }
+};
+
+export const addRating = async (req, res) => {
+  try {
+    const { placeId, score } = req.body;
+    const user = req.auth.userId;
+
+    if (!placeId || score == null) {
+      return res.status(400).json({
+        success: false,
+        message: 'placeId and score are required',
+      });
+    }
+
+    if (score < 1 || score > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Score must be between 1 and 5',
+      });
+    }
+
+    const userData = await User.findOne(
+      { clerkUserId: user },
+      { _id: 1 },
+    ).lean();
+
+    if (!userData) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const place = await Place.findById(placeId).lean();
+    if (!place) {
+      return res.status(404).json({
+        success: false,
+        message: 'Place not found',
+      });
+    }
+
+    const rating = await Rating.findOneAndUpdate(
+      { userId: userData._id, restaurantId: placeId },
+      { score },
+      { upsert: true, new: true },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Rating saved',
+      data: rating,
+    });
+  } catch (error) {
+    console.error('Error adding rating:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to add rating',
+    });
   }
 };
