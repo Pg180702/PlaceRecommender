@@ -113,6 +113,11 @@ const userSchema = new mongoose.Schema(
         // [7] adventure_score
       },
     },
+
+    fingerprintStale: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true, // Auto-manages createdAt and updatedAt

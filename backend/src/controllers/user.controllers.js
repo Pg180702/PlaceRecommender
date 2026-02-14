@@ -1,6 +1,10 @@
 import { Place } from '../models/places.models.js';
 import { Rating } from '../models/ratings.models.js';
-import { buildFingerPrint } from '../utils/utils.aiBuilder.js';
+import {
+  buildFingerPrint,
+  fetchRecommendations,
+  scoreRestaurant,
+} from '../utils/utils.aiBuilder.js';
 
 export const saveUserPreferences = async (req, res) => {
   try {
@@ -103,9 +107,8 @@ export const addEnjoyedRestaurants = async (req, res) => {
     );
     user.enjoyedRestaurants.push(...newIds);
 
+    user.fingerprintStale = true;
     await user.save();
-
-    await buildFingerPrint(user);
 
     return res.json({
       success: true,
@@ -137,9 +140,8 @@ export const removeEnjoyedRestaurants = async (req, res) => {
       (id) => !restaurantIds.includes(id.toString()),
     );
 
+    user.fingerprintStale = true;
     await user.save();
-
-    await buildFingerPrint(user);
 
     return res.json({
       success: true,
@@ -344,5 +346,53 @@ export const addRating = async (req, res) => {
   }
 };
 
-// Finish fingerprint builder
-// Finish photoscanner and recommender apis and logic
+export const fetchUserRecommendations = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user.tasteFingerprint?.fingerprintVector) {
+      if (user.enjoyedRestaurants.length > 2) await buildFingerPrint(user);
+      else
+        return res.status(400).json({
+          success: false,
+          message:
+            'User preference and choices not updated so cannot recommend',
+        });
+    }
+
+    const recommendations = await fetchRecommendations(user);
+
+    return res.status(200).json({
+      success: true,
+      data: recommendations,
+    });
+  } catch (error) {
+    console.log('Error while generating user recommendations', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Could not fetch user recommendations',
+    });
+  }
+};
+
+export const fetchScanInfo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'No photo uploaded' });
+    }
+
+    const result = await scoreRestaurant(req.user, req.file.buffer);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching info from uploaded image',
+    });
+  }
+};

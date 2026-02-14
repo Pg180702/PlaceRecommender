@@ -9,7 +9,10 @@ import {
   viewProfile,
   searchPlaces,
   addRating,
+  fetchUserRecommendations,
+  fetchScanInfo,
 } from '../controllers/user.controllers.js';
+import { upload } from '../utils/utils.multer.js';
 
 const router = Router();
 
@@ -23,5 +26,7 @@ router.post('/enjoyed', addEnjoyedRestaurants);
 router.delete('/enjoyed', removeEnjoyedRestaurants);
 router.get('/places', searchPlaces);
 router.post('/rating', addRating);
+router.get('/recommendations', fetchUserRecommendations);
+router.get('/scanInfo', upload.single('photo'), fetchScanInfo);
 
 export default router;
