@@ -345,5 +345,4 @@ export const addRating = async (req, res) => {
 };
 
 // Finish fingerprint builder
-// Add monthly runner for places
 // Finish photoscanner and recommender apis and logic
