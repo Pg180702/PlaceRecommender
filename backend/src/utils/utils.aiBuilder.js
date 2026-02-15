@@ -1,5 +1,6 @@
 import { Place } from '../models/places.models.js';
 import { Rating } from '../models/ratings.models.js';
+import { Recommendation } from '../models/recommendations.models.js';
 import { User } from '../models/user.models.js';
 import { callOpenAi, callOpenAiVision } from '../services/service.openai.js';
 import {
@@ -136,7 +137,12 @@ export const fetchRecommendations = async (user) => {
     });
   }
 
-  return { recommendations };
+  const saved = await Recommendation.create({
+    userId: user._id,
+    recommendations,
+  });
+
+  return saved;
 };
 
 const getSocialProof = async (currentUser, restaurantId) => {

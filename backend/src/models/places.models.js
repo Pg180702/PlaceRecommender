@@ -16,6 +16,7 @@ const placeSchema = new mongoose.Schema(
     totalRatings: Number,
     address: { type: String, required: true },
     photoUrl: String,
+    googleMapsUrl: String,
     timings: {
       openingTime: { type: String, match: /^([01]\d|2[0-3]):([0-5]\d)$/ },
       closingTime: { type: String, match: /^([01]\d|2[0-3]):([0-5]\d)$/ },

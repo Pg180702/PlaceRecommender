@@ -1,12 +1,28 @@
 import { Place } from '../models/places.models.js';
 import { Rating } from '../models/ratings.models.js';
+import { Recommendation } from '../models/recommendations.models.js';
 import {
   buildFingerPrint,
   fetchRecommendations,
   scoreRestaurant,
 } from '../utils/utils.aiBuilder.js';
 
-export const saveUserPreferences = async (req, res) => {
+export const getUserPreferences = async (req, res) => {
+  try {
+    const user = req.user;
+    return res.status(200).json({
+      success: true,
+      data: user.preferences || null,
+    });
+  } catch (error) {
+    console.error('Error fetching preferences:', error);
+    return res
+      .status(500)
+      .json({ success: false, message: 'Failed to fetch preferences' });
+  }
+};
+
+export const upsertUserPreferences = async (req, res) => {
   try {
     const {
       cuisines,
@@ -37,55 +53,16 @@ export const saveUserPreferences = async (req, res) => {
 
     await user.save();
 
-    return res.json({ success: true, message: 'Preferences saved' });
+    return res.json({
+      success: true,
+      message: 'Preferences saved',
+      data: user.preferences,
+    });
   } catch (error) {
     console.error('Error saving preferences:', error);
     return res
       .status(500)
       .json({ success: false, message: 'Failed to save preferences' });
-  }
-};
-
-export const editUserPreferences = async (req, res) => {
-  try {
-    const updates = req.body;
-
-    const user = req.user;
-
-    if (!user.preferences) {
-      return res.status(400).json({
-        success: false,
-        message: 'No existing preferences found. Save preferences first.',
-      });
-    }
-
-    const allowedFields = [
-      'cuisines',
-      'spiceLevel',
-      'priceRange',
-      'ambiance',
-      'mealOccasion',
-      'dietRestrictions',
-    ];
-
-    for (const key of Object.keys(updates)) {
-      if (allowedFields.includes(key)) {
-        user.preferences[key] = updates[key];
-      }
-    }
-
-    await user.save();
-
-    return res.json({
-      success: true,
-      message: 'Preferences updated',
-      data: user.preferences,
-    });
-  } catch (error) {
-    console.error('Error editing preferences:', error);
-    return res
-      .status(500)
-      .json({ success: false, message: 'Failed to update preferences' });
   }
 };
 
@@ -299,53 +276,6 @@ export const searchPlaces = async (req, res) => {
   }
 };
 
-export const addRating = async (req, res) => {
-  try {
-    const { placeId, score } = req.body;
-    const user = req.user;
-
-    if (!placeId || score == null) {
-      return res.status(400).json({
-        success: false,
-        message: 'placeId and score are required',
-      });
-    }
-
-    if (score < 1 || score > 5) {
-      return res.status(400).json({
-        success: false,
-        message: 'Score must be between 1 and 5',
-      });
-    }
-
-    const place = await Place.findById(placeId).lean();
-    if (!place) {
-      return res.status(404).json({
-        success: false,
-        message: 'Place not found',
-      });
-    }
-
-    const rating = await Rating.findOneAndUpdate(
-      { userId: user._id, restaurantId: placeId },
-      { score },
-      { upsert: true, new: true },
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: 'Rating saved',
-      data: rating,
-    });
-  } catch (error) {
-    console.error('Error adding rating:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to add rating',
-    });
-  }
-};
-
 export const fetchUserRecommendations = async (req, res) => {
   try {
     const user = req.user;
@@ -360,11 +290,11 @@ export const fetchUserRecommendations = async (req, res) => {
         });
     }
 
-    const recommendations = await fetchRecommendations(user);
+    const saved = await fetchRecommendations(user);
 
     return res.status(200).json({
       success: true,
-      data: recommendations,
+      data: saved.recommendations,
     });
   } catch (error) {
     console.log('Error while generating user recommendations', error);
@@ -393,6 +323,63 @@ export const fetchScanInfo = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching info from uploaded image',
+    });
+  }
+};
+
+export const getUserStats = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const preferencesSet = user.preferences?.cuisines?.length > 0 ? 1 : 0;
+    const enjoyedCount = user.enjoyedRestaurants?.length || 0;
+
+    const lastRec = await Recommendation.findOne({ userId: user._id })
+      .sort({ createdAt: -1 })
+      .lean();
+    const recommendationsCount = lastRec?.recommendations?.length || 0;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        preferencesSet,
+        enjoyedCount,
+        recommendationsCount,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching user stats:', error);
+    return res
+      .status(500)
+      .json({ success: false, message: 'Failed to fetch stats' });
+  }
+};
+
+export const fetchLastRecommendationsForUser = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const last = await Recommendation.findOne({ userId: user._id })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (!last) {
+      return res.status(200).json({
+        success: true,
+        message: 'User has not generated any recommendations yet',
+        data: [],
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: last.recommendations,
+    });
+  } catch (error) {
+    console.log('Error while fetching last recommendations', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Could not fetch user recommendations',
     });
   }
 };

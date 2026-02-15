@@ -163,6 +163,7 @@ const fetchPlaceDetailsAndUpsert = async (placeIds) => {
         totalRatings: placeDetails.userRatingCount || 0,
         address: placeDetails.formattedAddress || "",
         photoUrl: photoUrl,
+        googleMapsUrl: `https://www.google.com/maps/place/?q=place_id:${id}`,
         location: {
           type: "Point",
           coordinates: [
