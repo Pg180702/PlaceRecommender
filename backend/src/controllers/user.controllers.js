@@ -1,5 +1,4 @@
 import { Place } from '../models/places.models.js';
-import { Rating } from '../models/ratings.models.js';
 import { Recommendation } from '../models/recommendations.models.js';
 import {
   buildFingerPrint,

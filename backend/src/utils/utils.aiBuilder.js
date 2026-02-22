@@ -1,5 +1,4 @@
 import { Place } from '../models/places.models.js';
-import { Rating } from '../models/ratings.models.js';
 import { Recommendation } from '../models/recommendations.models.js';
 import { User } from '../models/user.models.js';
 import { callOpenAi, callOpenAiVision } from '../services/service.openai.js';
@@ -110,10 +109,10 @@ export const fetchRecommendations = async (user) => {
     let adventureNudge = null;
 
     if (item.matchScore < 55) {
-      socialProof = await getSocialProof(user, restaurant._id);
+      socialProof = await getSocialProof(user, restaurant);
 
       if (socialProof && socialProof.similarUsersWhoTried >= 2) {
-        adventureNudge = `${socialProof.similarUsersWhoTried} people with a taste like yours loved ${restaurant.name} and gave it ${socialProof.averageRating}/5 — might be worth a try!`;
+        adventureNudge = `${socialProof.similarUsersWhoTried} people with a taste like yours have this in their favorites — Google rates it ${socialProof.averageRating}/5!`;
       }
     }
 
@@ -145,7 +144,7 @@ export const fetchRecommendations = async (user) => {
   return saved;
 };
 
-const getSocialProof = async (currentUser, restaurantId) => {
+const getSocialProof = async (currentUser, restaurant) => {
   const currentVector = currentUser?.tasteFingerprint?.fingerprintVector;
 
   if (!currentVector) return null;
@@ -153,36 +152,20 @@ const getSocialProof = async (currentUser, restaurantId) => {
   const otherUsers = await User.find({
     _id: { $ne: currentUser._id },
     'tasteFingerprint.fingerprintVector': { $exists: true },
+    enjoyedRestaurants: restaurant._id,
   }).lean();
 
-  const scored = otherUsers
-    .map((u) => ({
-      _id: u._id,
-      similarity: cosineSimilarity(
-        currentVector,
-        u.tasteFingerprint.fingerprintVector,
-      ),
-    }))
-    .filter((u) => u.similarity > 0.6)
-    .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, 30);
+  const similarUsers = otherUsers.filter(
+    (u) =>
+      cosineSimilarity(currentVector, u.tasteFingerprint.fingerprintVector) >
+      0.6,
+  );
 
-  if (scored.length === 0) return null;
-
-  const similarUserIds = scored.map((u) => u._id);
-  const ratings = await Rating.find({
-    userId: { $in: similarUserIds },
-    restaurantId,
-  }).lean();
-
-  if (ratings.length === 0) return null;
-
-  const avgRating =
-    ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length;
+  if (similarUsers.length === 0) return null;
 
   return {
-    similarUsersWhoTried: ratings.length,
-    averageRating: Math.round(avgRating * 10) / 10,
+    similarUsersWhoTried: similarUsers.length,
+    averageRating: restaurant.rating,
   };
 };
 
@@ -341,10 +324,10 @@ export const scoreRestaurant = async (user, imageBuffer) => {
   let adventureNudge = null;
 
   if (scored.matchScore < 55) {
-    socialProof = await getSocialProof(user, restaurant._id);
+    socialProof = await getSocialProof(user, restaurant);
 
     if (socialProof && socialProof.similarUsersWhoTried >= 2) {
-      adventureNudge = `${socialProof.similarUsersWhoTried} people with a taste like yours loved ${restaurant.name} and gave it ${socialProof.averageRating}/5 — might be worth a try!`;
+      adventureNudge = `${socialProof.similarUsersWhoTried} people with a taste like yours have this in their favorites — Google rates it ${socialProof.averageRating}/5!`;
     }
   }
 
