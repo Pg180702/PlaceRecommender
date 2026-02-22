@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.middleware.js';
+import { aiRateLimit } from '../middleware/rateLimit.middleware.js';
 import {
   getUserPreferences,
   upsertUserPreferences,
@@ -27,8 +28,8 @@ router.get('/enjoyed', fetchEnjoyedRestaurantsWithSearchQuery);
 router.post('/enjoyed', addEnjoyedRestaurants);
 router.delete('/enjoyed', removeEnjoyedRestaurants);
 router.get('/places', searchPlaces);
-router.get('/recommendations', fetchUserRecommendations);
-router.post('/scanInfo', upload.single('photo'), fetchScanInfo);
+router.get('/recommendations', aiRateLimit, fetchUserRecommendations);
+router.post('/scanInfo', aiRateLimit, upload.single('photo'), fetchScanInfo);
 router.get('/fetchPastUserRecommendations', fetchLastRecommendationsForUser);
 
 export default router;

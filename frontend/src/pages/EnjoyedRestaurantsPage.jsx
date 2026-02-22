@@ -2,9 +2,22 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, Trash2, MapPin, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Search,
+  Trash2,
+  MapPin,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
 
@@ -21,7 +34,6 @@ export default function EnjoyedRestaurantsPage() {
   const [page, setPage] = useState(0);
   const [pagination, setPagination] = useState(null);
 
-  // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -34,7 +46,8 @@ export default function EnjoyedRestaurantsPage() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({ pageNo: page, pageSize: PAGE_SIZE });
-      if (debouncedQuery.trim()) params.set('searchQuery', debouncedQuery.trim());
+      if (debouncedQuery.trim())
+        params.set('searchQuery', debouncedQuery.trim());
       const res = await apiFetch(getToken, `/enjoyed?${params}`);
       if (res.success) {
         setEnjoyedPlaces(res.data || []);
@@ -61,7 +74,6 @@ export default function EnjoyedRestaurantsPage() {
       });
       if (res.success) {
         toast.success(`Removed ${place.name} from your enjoyed list`);
-        // If last item on a non-first page, go back one page
         if (enjoyedPlaces.length === 1 && page > 0) {
           setPage((p) => p - 1);
         } else {
@@ -85,9 +97,12 @@ export default function EnjoyedRestaurantsPage() {
       <Toaster richColors />
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Enjoyed Restaurants</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Enjoyed Restaurants
+        </h1>
         <p className="text-gray-600">
-          Manage your favorite places. These help us understand your taste and provide better recommendations.
+          Manage your favorite places. These help us understand your taste and
+          provide better recommendations.
         </p>
       </div>
 
@@ -112,12 +127,17 @@ export default function EnjoyedRestaurantsPage() {
         <Card>
           <CardContent className="py-12 text-center">
             {debouncedQuery ? (
-              <p className="text-gray-500">No places found matching your search.</p>
+              <p className="text-gray-500">
+                No places found matching your search.
+              </p>
             ) : (
               <>
-                <p className="text-gray-500 mb-4">You haven't added any enjoyed restaurants yet.</p>
+                <p className="text-gray-500 mb-4">
+                  You haven't added any enjoyed restaurants yet.
+                </p>
                 <p className="text-sm text-gray-400">
-                  Visit the Explore Places page to add restaurants you've enjoyed.
+                  Visit the Explore Places page to add restaurants you've
+                  enjoyed.
                 </p>
               </>
             )}
@@ -127,39 +147,52 @@ export default function EnjoyedRestaurantsPage() {
         <>
           {totalRecords > 0 && (
             <p className="text-sm text-gray-500 mb-4">
-              Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalRecords)} of {totalRecords}
+              Showing {page * PAGE_SIZE + 1}–
+              {Math.min((page + 1) * PAGE_SIZE, totalRecords)} of {totalRecords}
             </p>
           )}
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {enjoyedPlaces.map((place) => (
-              <Card key={place._id} className="overflow-hidden">
+              <Card key={place._id} className="overflow-hidden flex flex-col">
                 {place.photoUrl && (
                   <div className="aspect-video overflow-hidden">
-                    <img src={place.photoUrl} alt={place.name} className="w-full h-full object-cover" />
+                    <img
+                      src={place.photoUrl}
+                      alt={place.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 )}
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
                     <CardTitle className="text-lg">{place.name}</CardTitle>
-                    <Badge variant="secondary">{PRICE_LEVEL_MAP[place.priceLevel] || '₹₹'}</Badge>
+                    <Badge variant="secondary">
+                      {PRICE_LEVEL_MAP[place.priceLevel] || '₹₹'}
+                    </Badge>
                   </div>
                   <CardDescription className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       {place.cuisines?.slice(0, 2).map((c) => (
-                        <span key={c} className="text-sm">{c}</span>
+                        <span key={c} className="text-sm">
+                          {c}
+                        </span>
                       ))}
                       {place.address && (
                         <>
                           <span className="text-gray-300">•</span>
-                          <span className="text-sm truncate max-w-[120px]">{place.address}</span>
+                          <span className="text-sm truncate max-w-[120px]">
+                            {place.address}
+                          </span>
                         </>
                       )}
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1">
                         <span className="text-yellow-500">★</span>
-                        <span className="text-sm font-medium">{place.rating}/5</span>
+                        <span className="text-sm font-medium">
+                          {place.rating}/5
+                        </span>
                       </div>
                       {place.googleMapsUrl && (
                         <a
@@ -175,7 +208,7 @@ export default function EnjoyedRestaurantsPage() {
                     </div>
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="mt-auto">
                   <Button
                     onClick={() => handleRemove(place)}
                     variant="outline"

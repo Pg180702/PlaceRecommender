@@ -1,13 +1,17 @@
 import { SignInButton, SignUpButton } from '@clerk/clerk-react';
 import { MapPin, Sparkles, Heart, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
-        {/* Hero */}
         <div className="text-center mb-16">
           <div className="flex justify-center mb-6">
             <div className="bg-blue-600 rounded-full p-4">
@@ -18,8 +22,9 @@ export default function LandingPage() {
             Discover Your Perfect Place
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-            PlaceMatch uses AI to recommend restaurants and places you'll love based on your
-            preferences and past experiences. Find your next favorite spot effortlessly.
+            PlaceMatch uses AI to recommend restaurants and places you'll love
+            based on your preferences and past experiences. Find your next
+            favorite spot effortlessly.
           </p>
 
           <div className="flex gap-4 justify-center">
@@ -45,7 +50,8 @@ export default function LandingPage() {
               </div>
               <CardTitle>AI-Powered Recommendations</CardTitle>
               <CardDescription>
-                Get personalized restaurant suggestions based on your unique taste profile
+                Get personalized restaurant suggestions based on your unique
+                taste profile
               </CardDescription>
             </CardHeader>
           </Card>
@@ -57,7 +63,8 @@ export default function LandingPage() {
               </div>
               <CardTitle>Track Your Favorites</CardTitle>
               <CardDescription>
-                Save restaurants you've enjoyed to help us understand your preferences better
+                Save restaurants you've enjoyed to help us understand your
+                preferences better
               </CardDescription>
             </CardHeader>
           </Card>
@@ -69,7 +76,8 @@ export default function LandingPage() {
               </div>
               <CardTitle>Photo Analysis</CardTitle>
               <CardDescription>
-                Upload a photo of any place and we'll tell you how well it matches your taste
+                Upload a photo of any place and we'll tell you how well it
+                matches your taste
               </CardDescription>
             </CardHeader>
           </Card>

@@ -1,26 +1,63 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Save, Loader2 } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
 
 const CUISINES = [
-  'North Indian', 'South Indian', 'Street Food', 'Chinese', 'Italian',
-  'Mexican', 'Japanese', 'Pizza', 'Burgers', 'Biryani', 'Mughlai',
-  'Cafe', 'Bakery', 'Dessert', 'Dhaba', 'Desserts',
+  'North Indian',
+  'South Indian',
+  'Street Food',
+  'Chinese',
+  'Italian',
+  'Mexican',
+  'Japanese',
+  'Pizza',
+  'Burgers',
+  'Biryani',
+  'Mughlai',
+  'Cafe',
+  'Bakery',
+  'Dessert',
+  'Dhaba',
+  'Desserts',
 ];
 
 const DIETARY_RESTRICTIONS = [
-  'Vegetarian', 'Vegan', 'Gluten-Free', 'Non-Vegetarian', 'Jain', 'No Onion/Garlic',
+  'Vegetarian',
+  'Vegan',
+  'Gluten-Free',
+  'Non-Vegetarian',
+  'Jain',
+  'No Onion/Garlic',
 ];
 
 const AMBIANCE = [
-  'Casual', 'Street', 'Cozy', 'Upscale', 'Rooftop',
-  'Lively', 'Quiet', 'Family-Friendly', 'Romantic',
+  'Casual',
+  'Street',
+  'Cozy',
+  'Upscale',
+  'Rooftop',
+  'Lively',
+  'Quiet',
+  'Family-Friendly',
+  'Romantic',
 ];
 
 const SPICE_LEVELS = [
@@ -103,8 +140,8 @@ export default function PreferencesPage() {
         setAmbiance(p.ambiance || []);
         setMealOccasion(p.mealOccasion || '');
       }
-    } catch {
-      // silent - user just hasn't set preferences yet
+    } catch (error) {
+      console.log('Failed top fetch preferences due to error', error);
     } finally {
       setIsLoading(false);
     }
@@ -170,19 +207,23 @@ export default function PreferencesPage() {
       <Toaster richColors />
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Preferences</h1>
-        <p className="text-gray-600">Set your dining preferences to get personalized recommendations</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Your Preferences
+        </h1>
+        <p className="text-gray-600">
+          Set your dining preferences to get personalized recommendations
+        </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Dining Preferences</CardTitle>
           <CardDescription>
-            Customize your preferences to help us find the perfect places for you
+            Customize your preferences to help us find the perfect places for
+            you
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-
           {/* Cuisines — multi */}
           <div className="space-y-3">
             <Label>Preferred Cuisines</Label>
@@ -218,13 +259,18 @@ export default function PreferencesPage() {
             {/* Spice Level */}
             <div className="space-y-2">
               <Label>Spice Level</Label>
-              <Select value={spiceLevel} onValueChange={markChanged(setSpiceLevel)}>
+              <Select
+                value={spiceLevel}
+                onValueChange={markChanged(setSpiceLevel)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select spice level" />
                 </SelectTrigger>
                 <SelectContent>
                   {SPICE_LEVELS.map(({ value, label }) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -233,13 +279,18 @@ export default function PreferencesPage() {
             {/* Price Range */}
             <div className="space-y-2">
               <Label>Price Range</Label>
-              <Select value={priceRange} onValueChange={markChanged(setPriceRange)}>
+              <Select
+                value={priceRange}
+                onValueChange={markChanged(setPriceRange)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select price range" />
                 </SelectTrigger>
                 <SelectContent>
                   {PRICE_RANGES.map(({ value, label }) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -248,13 +299,18 @@ export default function PreferencesPage() {
             {/* Meal Occasion */}
             <div className="space-y-2">
               <Label>Meal Occasion</Label>
-              <Select value={mealOccasion} onValueChange={markChanged(setMealOccasion)}>
+              <Select
+                value={mealOccasion}
+                onValueChange={markChanged(setMealOccasion)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select occasion" />
                 </SelectTrigger>
                 <SelectContent>
                   {MEAL_OCCASIONS.map(({ value, label }) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -263,7 +319,11 @@ export default function PreferencesPage() {
 
           {/* Save */}
           <div className="flex justify-end pt-4 border-t">
-            <Button onClick={handleSave} disabled={!hasChanges || isSaving} className="gap-2">
+            <Button
+              onClick={handleSave}
+              disabled={!hasChanges || isSaving}
+              className="gap-2"
+            >
               {isSaving ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />

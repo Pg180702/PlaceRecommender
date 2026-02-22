@@ -42,8 +42,6 @@ export default function App() {
           <Route path="/preferences" element={<PreferencesPage />} />
           <Route path="/enjoyed" element={<EnjoyedRestaurantsPage />} />
         </Route>
-
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

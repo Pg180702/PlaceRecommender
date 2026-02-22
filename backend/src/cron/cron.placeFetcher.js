@@ -1,13 +1,13 @@
-import { Place } from "../models/placeModel.js"; // Add this import
 import {
   CITY_CENTER,
   placeSearchQueries,
-} from "../constants/constants.placeSearchQueries.js";
+} from '../constants/constants.placeSearchQueries.js';
+import { Place } from '../models/places.models.js';
 import {
   callGooglePlacesApi,
   getPhotoUrl,
   inferCuisines,
-} from "../utils/utils.placeFetcher.js";
+} from '../utils/utils.placeFetcher.js';
 
 const SEARCH_API_URL = process.env.GOOGLE_TEXT_SEARCH_API;
 const MAX_PAGES_PER_QUERY = 3;
@@ -16,7 +16,7 @@ const PAGE_DELAY_MS = 2000;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const fetchPlaceIdsFromTextSearch = async (searchQuery, pageToken = null) => {
-  if (!SEARCH_API_URL) throw new Error("Missing GOOGLE_TEXT_SEARCH_API");
+  if (!SEARCH_API_URL) throw new Error('Missing GOOGLE_TEXT_SEARCH_API');
 
   const body = {
     textQuery: searchQuery,
@@ -35,9 +35,9 @@ const fetchPlaceIdsFromTextSearch = async (searchQuery, pageToken = null) => {
 
   const data = await callGooglePlacesApi({
     url: SEARCH_API_URL,
-    method: "POST",
+    method: 'POST',
     data: body,
-    fieldMask: "places.id,nextPageToken",
+    fieldMask: 'places.id,nextPageToken',
   });
 
   const places = data?.places ?? [];
@@ -50,9 +50,9 @@ const fetchPlaceIdsFromTextSearch = async (searchQuery, pageToken = null) => {
 const fetchPlaceDataFromGoogle = async (placeId) => {
   const data = await callGooglePlacesApi({
     url: `${process.env.GOOGLE_PLACES_API}/places/${placeId}`,
-    method: "GET",
+    method: 'GET',
     fieldMask:
-      "id,displayName,formattedAddress,location,priceLevel,rating,userRatingCount,types,reviews,photos,regularOpeningHours,businessStatus",
+      'id,displayName,formattedAddress,location,priceLevel,rating,userRatingCount,types,reviews,photos,regularOpeningHours,businessStatus',
   });
   return data ?? null;
 };
@@ -108,14 +108,14 @@ const extractTimings = (regularOpeningHours) => {
   const result = {};
 
   if (firstPeriod.open) {
-    const hour = String(firstPeriod.open.hour || 0).padStart(2, "0");
-    const minute = String(firstPeriod.open.minute || 0).padStart(2, "0");
+    const hour = String(firstPeriod.open.hour || 0).padStart(2, '0');
+    const minute = String(firstPeriod.open.minute || 0).padStart(2, '0');
     result.openingTime = `${hour}:${minute}`;
   }
 
   if (firstPeriod.close) {
-    const hour = String(firstPeriod.close.hour || 0).padStart(2, "0");
-    const minute = String(firstPeriod.close.minute || 0).padStart(2, "0");
+    const hour = String(firstPeriod.close.hour || 0).padStart(2, '0');
+    const minute = String(firstPeriod.close.minute || 0).padStart(2, '0');
     result.closingTime = `${hour}:${minute}`;
   }
 
@@ -146,26 +146,26 @@ const fetchPlaceDetailsAndUpsert = async (placeIds) => {
         : null;
 
       const reviews = (placeDetails.reviews || []).map((r) => ({
-        text: r.text?.text || r.text || "",
+        text: r.text?.text || r.text || '',
         rating: r.rating || 0,
         authorName:
-          r.authorAttribution?.displayName || r.author_name || "Anonymous",
+          r.authorAttribution?.displayName || r.author_name || 'Anonymous',
       }));
 
       const doc = {
         googlePlaceId: id,
-        name: placeDetails.displayName?.text || "Unknown",
+        name: placeDetails.displayName?.text || 'Unknown',
         cuisines: cuisines,
         priceLevel: placeDetails.priceLevel
           ? parsePriceLevel(placeDetails.priceLevel)
           : 0,
         rating: placeDetails.rating || 0,
         totalRatings: placeDetails.userRatingCount || 0,
-        address: placeDetails.formattedAddress || "",
+        address: placeDetails.formattedAddress || '',
         photoUrl: photoUrl,
         googleMapsUrl: `https://www.google.com/maps/place/?q=place_id:${id}`,
         location: {
-          type: "Point",
+          type: 'Point',
           coordinates: [
             placeDetails.location.longitude,
             placeDetails.location.latitude,
@@ -182,7 +182,7 @@ const fetchPlaceDetailsAndUpsert = async (placeIds) => {
       });
 
       upserted++;
-      console.log(`${doc.name} (${cuisines.join(", ")})`);
+      console.log(`${doc.name} (${cuisines.join(', ')})`);
 
       await sleep(300);
     } catch (error) {

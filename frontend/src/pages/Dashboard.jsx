@@ -1,9 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Sparkles, Camera, AlertCircle, Loader2 } from 'lucide-react';
@@ -16,7 +28,11 @@ export default function Dashboard() {
   const { user } = useUser();
   const { getToken } = useAuth();
 
-  const [stats, setStats] = useState({ preferencesSet: 0, enjoyedCount: 0, recommendationsCount: 0 });
+  const [stats, setStats] = useState({
+    preferencesSet: 0,
+    enjoyedCount: 0,
+    recommendationsCount: 0,
+  });
   const [recommendations, setRecommendations] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingRecs, setIsLoadingRecs] = useState(true);
@@ -29,8 +45,8 @@ export default function Dashboard() {
     try {
       const res = await apiFetch(getToken, '/stats');
       if (res.success) setStats(res.data);
-    } catch {
-      // silent
+    } catch (error) {
+      console.log('Failed to load stats due to error - ', error);
     }
   }, [getToken]);
 
@@ -39,8 +55,8 @@ export default function Dashboard() {
     try {
       const res = await apiFetch(getToken, '/fetchPastUserRecommendations');
       if (res.success) setRecommendations(res.data || []);
-    } catch {
-      // silent
+    } catch (error) {
+      console.log('Failed to load recommendations due to error - ', error);
     } finally {
       setIsLoadingRecs(false);
     }
@@ -56,15 +72,21 @@ export default function Dashboard() {
 
   const handleGenerateRecommendations = async () => {
     if (!hasPreferences && !hasEnjoyedPlaces) {
-      toast.error('Please set up your preferences and add enjoyed restaurants first');
+      toast.error(
+        'Please set up your preferences and add enjoyed restaurants first',
+      );
       return;
     }
     if (!hasPreferences) {
-      toast.error('Please head over to Preferences first and set up your preferences');
+      toast.error(
+        'Please head over to Preferences first and set up your preferences',
+      );
       return;
     }
     if (!hasEnjoyedPlaces) {
-      toast.error("Please add some enjoyed restaurants to help us recommend places you'll love");
+      toast.error(
+        "Please add some enjoyed restaurants to help us recommend places you'll love",
+      );
       return;
     }
 
@@ -97,7 +119,9 @@ export default function Dashboard() {
       return;
     }
     if (!hasEnjoyedPlaces) {
-      toast.error('Please add some enjoyed restaurants to get accurate photo analysis');
+      toast.error(
+        'Please add some enjoyed restaurants to get accurate photo analysis',
+      );
       return;
     }
 
@@ -107,11 +131,14 @@ export default function Dashboard() {
       formData.append('photo', photoFile);
 
       const token = await getToken();
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/scanInfo`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/user/scanInfo`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        },
+      );
       const data = await res.json();
 
       if (data.success) {
@@ -140,7 +167,9 @@ export default function Dashboard() {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Welcome back, {user?.firstName || 'there'}!
         </h1>
-        <p className="text-gray-600">Discover new places tailored to your taste</p>
+        <p className="text-gray-600">
+          Discover new places tailored to your taste
+        </p>
       </div>
 
       {/* Quick Stats */}
@@ -160,14 +189,21 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Recommendations</CardDescription>
-            <CardTitle className="text-3xl">{stats.recommendationsCount}</CardTitle>
+            <CardTitle className="text-3xl">
+              {stats.recommendationsCount}
+            </CardTitle>
           </CardHeader>
         </Card>
       </div>
 
       {/* Actions */}
       <div className="flex gap-4 mb-8">
-        <Button onClick={handleGenerateRecommendations} disabled={isGenerating} size="lg" className="gap-2">
+        <Button
+          onClick={handleGenerateRecommendations}
+          disabled={isGenerating}
+          size="lg"
+          className="gap-2"
+        >
           {isGenerating ? (
             <>
               <Loader2 className="size-5 animate-spin" />
@@ -180,7 +216,12 @@ export default function Dashboard() {
             </>
           )}
         </Button>
-        <Button onClick={() => setShowPhotoDialog(true)} variant="outline" size="lg" className="gap-2">
+        <Button
+          onClick={() => setShowPhotoDialog(true)}
+          variant="outline"
+          size="lg"
+          className="gap-2"
+        >
           <Camera className="size-5" />
           Upload Photo
         </Button>
@@ -195,20 +236,26 @@ export default function Dashboard() {
         <Card>
           <CardContent className="py-12 text-center">
             <Sparkles className="size-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Started</h3>
-            <p className="text-gray-500 mb-6">You haven't generated any recommendations yet.</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Get Started
+            </h3>
+            <p className="text-gray-500 mb-6">
+              You haven't generated any recommendations yet.
+            </p>
             {(!hasPreferences || !hasEnjoyedPlaces) && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
                 <div className="flex gap-3">
                   <AlertCircle className="size-5 text-blue-600 shrink-0 mt-0.5" />
                   <div className="text-left">
-                    <p className="text-sm text-blue-900 font-medium mb-1">Complete your profile</p>
+                    <p className="text-sm text-blue-900 font-medium mb-1">
+                      Complete your profile
+                    </p>
                     <p className="text-sm text-blue-700">
                       {!hasPreferences && !hasEnjoyedPlaces
                         ? 'Set up your preferences and add enjoyed restaurants to get personalized recommendations.'
                         : !hasPreferences
-                        ? 'Set up your preferences to get started.'
-                        : 'Add some enjoyed restaurants to help us understand your taste.'}
+                          ? 'Set up your preferences to get started.'
+                          : 'Add some enjoyed restaurants to help us understand your taste.'}
                     </p>
                   </div>
                 </div>
@@ -218,15 +265,26 @@ export default function Dashboard() {
         </Card>
       ) : (
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Recommendations</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Your Recommendations
+          </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {recommendations.map((rec, idx) => (
-              <Card key={rec.restaurant?._id || idx} className="overflow-hidden">
+              <Card
+                key={rec.restaurant?._id || idx}
+                className="overflow-hidden"
+              >
                 {rec.restaurant?.photoUrl && (
                   <div className="aspect-video overflow-hidden relative">
-                    <img src={rec.restaurant.photoUrl} alt={rec.restaurant.name} className="w-full h-full object-cover" />
+                    <img
+                      src={rec.restaurant.photoUrl}
+                      alt={rec.restaurant.name}
+                      className="w-full h-full object-cover"
+                    />
                     <div className="absolute top-3 right-3">
-                      <Badge className="bg-green-600">{rec.matchScore}% Match</Badge>
+                      <Badge className="bg-green-600">
+                        {rec.matchScore}% Match
+                      </Badge>
                     </div>
                   </div>
                 )}
@@ -234,30 +292,44 @@ export default function Dashboard() {
                   <div className="aspect-video bg-gray-100 flex items-center justify-center relative">
                     <Sparkles className="size-10 text-gray-300" />
                     <div className="absolute top-3 right-3">
-                      <Badge className="bg-green-600">{rec.matchScore}% Match</Badge>
+                      <Badge className="bg-green-600">
+                        {rec.matchScore}% Match
+                      </Badge>
                     </div>
                   </div>
                 )}
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="text-lg">{rec.restaurant?.name}</CardTitle>
-                    <Badge variant="secondary">{PRICE_LEVEL_MAP[rec.restaurant?.priceLevel] || '₹₹'}</Badge>
+                    <CardTitle className="text-lg">
+                      {rec.restaurant?.name}
+                    </CardTitle>
+                    <Badge variant="secondary">
+                      {PRICE_LEVEL_MAP[rec.restaurant?.priceLevel] || '₹₹'}
+                    </Badge>
                   </div>
                   <CardDescription className="space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
                       {rec.restaurant?.cuisines?.slice(0, 2).map((c) => (
-                        <span key={c} className="text-sm">{c}</span>
+                        <span key={c} className="text-sm">
+                          {c}
+                        </span>
                       ))}
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="text-yellow-500">★</span>
-                      <span className="text-sm font-medium">{rec.restaurant?.rating}</span>
+                      <span className="text-sm font-medium">
+                        {rec.restaurant?.rating}
+                      </span>
                     </div>
                     {rec.reasons?.length > 0 && (
-                      <p className="text-sm text-gray-600 mt-2">{rec.reasons[0]}</p>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {rec.reasons[0]}
+                      </p>
                     )}
                     {rec.suggestedDish && (
-                      <p className="text-sm text-blue-600 font-medium">Try: {rec.suggestedDish}</p>
+                      <p className="text-sm text-blue-600 font-medium">
+                        Try: {rec.suggestedDish}
+                      </p>
                     )}
                   </CardDescription>
                 </CardHeader>
@@ -285,14 +357,21 @@ export default function Dashboard() {
           <DialogHeader>
             <DialogTitle>Upload Place Photo</DialogTitle>
             <DialogDescription>
-              Upload a photo of a place and we'll analyze how well it matches your preferences
+              Upload a photo of a place and we'll analyze how well it matches
+              your preferences
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="photo">Select Photo</Label>
-              <Input id="photo" type="file" accept="image/*" onChange={handlePhotoUpload} disabled={isAnalyzing} />
+              <Input
+                id="photo"
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                disabled={isAnalyzing}
+              />
             </div>
 
             {photoFile && !photoAnalysis && (
@@ -305,28 +384,36 @@ export default function Dashboard() {
             {photoAnalysis && (
               <div className="space-y-3 border-t pt-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold">{photoAnalysis.placeName || photoAnalysis.name}</h4>
+                  <h4 className="font-semibold">
+                    {photoAnalysis.placeName || photoAnalysis.name}
+                  </h4>
                   <Badge
                     className={
                       photoAnalysis.matchScore >= 80
                         ? 'bg-green-600'
                         : photoAnalysis.matchScore >= 60
-                        ? 'bg-yellow-600'
-                        : 'bg-orange-600'
+                          ? 'bg-yellow-600'
+                          : 'bg-orange-600'
                     }
                   >
                     {photoAnalysis.matchScore}% Match
                   </Badge>
                 </div>
                 {photoAnalysis.cuisine && (
-                  <p className="text-sm text-gray-600">{photoAnalysis.cuisine}</p>
+                  <p className="text-sm text-gray-600">
+                    {photoAnalysis.cuisine}
+                  </p>
                 )}
                 {photoAnalysis.details && (
-                  <p className="text-sm text-gray-700">{photoAnalysis.details}</p>
+                  <p className="text-sm text-gray-700">
+                    {photoAnalysis.details}
+                  </p>
                 )}
                 {photoAnalysis.reasons && photoAnalysis.reasons.length > 0 && (
                   <ul className="text-sm text-gray-700 space-y-1 list-disc list-inside">
-                    {photoAnalysis.reasons.map((r, i) => <li key={i}>{r}</li>)}
+                    {photoAnalysis.reasons.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
                   </ul>
                 )}
               </div>
@@ -334,7 +421,11 @@ export default function Dashboard() {
 
             <div className="flex gap-2">
               {!photoAnalysis ? (
-                <Button onClick={handleAnalyzePhoto} disabled={!photoFile || isAnalyzing} className="flex-1">
+                <Button
+                  onClick={handleAnalyzePhoto}
+                  disabled={!photoFile || isAnalyzing}
+                  className="flex-1"
+                >
                   {isAnalyzing ? (
                     <>
                       <Loader2 className="size-4 animate-spin mr-2" />

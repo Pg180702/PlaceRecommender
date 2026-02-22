@@ -96,9 +96,10 @@ const userSchema = new mongoose.Schema(
 
       fingerprintVector: {
         type: [Number],
+        default: [0, 0, 0, 0, 0, 0, 0, 0],
         validate: {
           validator: function (v) {
-            return v.length === 8;
+            return v.length === 0 || v.length === 8;
           },
           message: 'fingerprintVector must have exactly 8 elements',
         },
